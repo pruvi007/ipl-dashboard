@@ -1,6 +1,6 @@
-package com.ipl.data;
+package com.ipl.ipldashboard.data;
 
-import com.ipl.model.Match;
+import com.ipl.ipldashboard.model.Match;
 import org.springframework.batch.item.ItemProcessor;
 
 import java.time.LocalDate;
@@ -14,7 +14,7 @@ public class MatchInputProcess implements ItemProcessor<MatchProcess, Match> {
         newMatch.setCity(matchProcess.getCity());
         newMatch.setDate(LocalDate.parse(matchProcess.getDate()));
         newMatch.setPlayerOfMatch(matchProcess.getPlayer_of_match());
-
+        newMatch.setVenue(matchProcess.getVenue());
         String firstInningsTeam, secondInningsTeam;
          if(matchProcess.getToss_decision().equals("bat"))
          {
@@ -32,9 +32,9 @@ public class MatchInputProcess implements ItemProcessor<MatchProcess, Match> {
          }
          newMatch.setTeam1(firstInningsTeam);
          newMatch.setTeam2(secondInningsTeam);
-         newMatch.setTossWiinner(matchProcess.getToss_winner());
+         newMatch.setTossWinner(matchProcess.getToss_winner());
          newMatch.setTossDecision(matchProcess.getToss_decision());
-         newMatch.setWinner(matchProcess.getWinner());
+         newMatch.setMatchWinner(matchProcess.getWinner());
          newMatch.setResult(matchProcess.getResult());
          newMatch.setResultMargin(matchProcess.getResult_margin());
          newMatch.setUmpire1(matchProcess.getUmpire1());

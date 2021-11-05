@@ -1,30 +1,33 @@
-package com.ipl.data;
+package com.ipl.ipldashboard.model;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-@NoArgsConstructor
+import javax.persistence.Entity;
+import javax.persistence.Id;
+import java.time.LocalDate;
+
+@Entity
 @AllArgsConstructor
-public class MatchProcess {
+@NoArgsConstructor
+public class Match {
+    @Id
     @Setter @Getter
-    private String id;
+    private long id;
 
     @Setter @Getter
     private String city;
 
     @Setter @Getter
-    private String date;
+    private LocalDate date;
 
     @Setter @Getter
-    private String player_of_match;
+    private String playerOfMatch;
 
     @Setter @Getter
     private String venue;
-
-    @Setter @Getter
-    private String neutral_venue;
 
     @Setter @Getter
     private String team1;
@@ -33,30 +36,26 @@ public class MatchProcess {
     private String team2;
 
     @Setter @Getter
-    private String toss_winner;
+    private String tossWinner;
 
     @Setter @Getter
-    private String toss_decision;
+    private String tossDecision;
 
     @Setter @Getter
-    private String winner;
+    private String matchWinner;
 
     @Setter @Getter
     private String result;
 
     @Setter @Getter
-    private String result_margin;
+    private String resultMargin;
 
     @Setter @Getter
     private String eliminator;
-
-    @Setter @Getter
-    private String method;
 
     @Setter @Getter
     private String umpire1;
 
     @Setter @Getter
     private String umpire2;
-
 }
