@@ -45,10 +45,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: ./frontend/ipl-dashboard
-
-    if: github.ref == 'refs/heads/main'
-    
+        working-directory: ./frontend/ipl-dashboard    
     steps:
     - name: Download artifact
       uses: actions/download-artifact@v2
