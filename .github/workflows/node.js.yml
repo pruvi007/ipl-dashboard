@@ -3,10 +3,10 @@ name: Continuos Integration
 on:
   push:
     branches:
-      - main
+      - master
   pull_request:
     branches:
-      - main
+      - master
 
 jobs:
   build:
@@ -46,7 +46,7 @@ jobs:
     defaults:
       run:
         working-directory: ./frontend/ipl-dashboard
-        
+
     if: github.ref == 'refs/heads/main'
     
     steps:
