@@ -1,0 +1,266 @@
+
+
+CREATE TABLE MatchTable(
+	matchId varchar(100),
+	city varchar(100),
+	matchDate varchar(100),
+	playerOfMatch varchar(100),
+	venue varchar(100),
+  	neutral varchar(100),
+	team1 varchar(100),
+	team2 varchar(100),
+	tossWinner varchar(100),
+	tossDecision varchar(100),
+	matchWinner varchar(100),
+	result varchar(100),
+	resultMargin varchar(100),
+	eliminator varchar(100),
+  	method varchar(100), 
+	umpire1 varchar(100), 
+	umpire2 varchar(100)
+);
+
+LOAD DATA INFILE
+'/var/lib/mysql-files/IPL Matches 2008-2020.csv'
+into table MatchTable
+FIELDS TERMINATED BY ','
+ENCLOSED BY '"'
+LINES TERMINATED BY '\n';
+
+
+// main query of select fields
+1. SELECT 
+	matchId, 
+	team1, 
+	team2, 
+	matchWinner,
+	matchDate as date, 
+	YEAR( STR_TO_DATE(matchDate, "%Y-%m-%d") ) as year,
+	MONTH( STR_TO_DATE(matchDate, "%Y-%m-%d") ) as month,
+	DAY( STR_TO_DATE(matchDate, "%Y-%m-%d") ) as day
+
+	FROM MatchTable
+	LIMIT 20;
+
+
+2. Total matches by year
+SELECT 
+	YEAR( STR_TO_DATE(matchDate, "%Y-%m-%d") ) as year,
+	count(*) as totalMatches
+FROM MatchTable
+GROUP BY 	
+	YEAR( STR_TO_DATE(matchDate, "%Y-%m-%d") ) 
+
+//
+select
+	ROW_NUMBER() OVER(ORDER By matchDate ASC) as matchNum,
+	matchDate,
+	YEAR( STR_TO_DATE(matchDate, "%Y-%m-%d") ) as year
+from
+	MatchTable
+where 
+	YEAR( STR_TO_DATE(matchDate, "%Y-%m-%d") ) = 2008
+
+2. Winner of each Year
+
+// last match row number is 1 for each year
+// use this to calculate winners
+SELECT
+	ROW_NUMBER() OVER(PARTITION BY YEAR( STR_TO_DATE(matchDate, "%Y-%m-%d") ) ORDER BY matchDate DESC) as matchNum,
+	team1,
+	team2,
+	matchWinner,
+	YEAR( STR_TO_DATE(matchDate, "%Y-%m-%d") ) as year
+
+FROM MatchTable;
+
+// 2nd subquery
+SELECT 
+	mod_table.matchWinner,
+	mod_table.year
+FROM 
+	(SELECT
+	ROW_NUMBER() OVER(PARTITION BY YEAR( STR_TO_DATE(matchDate, "%Y-%m-%d") ) ORDER BY matchDate DESC) as matchNum,
+	team1,
+	team2,
+	matchWinner,
+	YEAR( STR_TO_DATE(matchDate, "%Y-%m-%d") ) as year
+
+FROM MatchTable) 
+	as mod_table
+where mod_table.matchNum=1
+
+
+3. Winners count
+SELECT
+	mod_table2.matchWinner as Winner,
+	count(*) as TotalWins
+FROM 
+	(SELECT 
+	mod_table.matchWinner,
+	mod_table.year
+FROM 
+	(SELECT
+	ROW_NUMBER() OVER(PARTITION BY YEAR( STR_TO_DATE(matchDate, "%Y-%m-%d") ) ORDER BY matchDate DESC) as matchNum,
+	team1,
+	team2,
+	matchWinner,
+	YEAR( STR_TO_DATE(matchDate, "%Y-%m-%d") ) as year
+
+FROM MatchTable) 
+	as mod_table
+where mod_table.matchNum=1)
+	as mod_table2
+GROUP BY
+	mod_table2.matchWinner 
+
++---------------+--------------+------+-----+---------+-------+
+| Field         | Type         | Null | Key | Default | Extra |
++---------------+--------------+------+-----+---------+-------+
+| matchId       | varchar(100) | YES  |     | NULL    |       |
+| city          | varchar(100) | YES  |     | NULL    |       |
+| matchDate     | varchar(100) | YES  |     | NULL    |       |
+| playerOfMatch | varchar(100) | YES  |     | NULL    |       |
+| venue         | varchar(100) | YES  |     | NULL    |       |
+| neutral       | varchar(100) | YES  |     | NULL    |       |
+| team1         | varchar(100) | YES  |     | NULL    |       |
+| team2         | varchar(100) | YES  |     | NULL    |       |
+| tossWinner    | varchar(100) | YES  |     | NULL    |       |
+| tossDecision  | varchar(100) | YES  |     | NULL    |       |
+| matchWinner   | varchar(100) | YES  |     | NULL    |       |
+| result        | varchar(100) | YES  |     | NULL    |       |
+| resultMargin  | varchar(100) | YES  |     | NULL    |       |
+| eliminator    | varchar(100) | YES  |     | NULL    |       |
+| method        | varchar(100) | YES  |     | NULL    |       |
+| umpire1       | varchar(100) | YES  |     | NULL    |       |
+| umpire2       | varchar(100) | YES  |     | NULL    |       |
++---------------+--------------+------+-----+---------+-------+
+
+
+4. matched played by a team
+SELECT
+	m1.numMatches + m2.numMatches as totalMatches,
+	m1.team1
+from
+	(SELECT count(*) as numMatches, team1 from MatchTable group by team1) as m1,  
+	(SELECT count(*) as numMatches, team2 from MatchTable group by team2) as m2
+WHERE
+	m1.team1 = m2.team2
+GROUP BY m1.team1
+
+5. Matches played by venue
+SELECT
+	venue,
+	count(*) as numMatches
+FROM MatchTable
+GROUP BY
+	venue
+ORDER BY
+	count(*) DESC
+
+6. total wins of a team
+SELECT
+	matchWinner,
+	count(*) as totalWins
+FROM MatchTable
+GROUP BY
+	matchWinner
+ORDER BY
+	count(*) DESC
+
+7. Win % of each team
+
+SELECT 
+	M.matchWinner,
+	count(M.matchId) as totalWins,
+	m1.numMatches + m2.numMatches as totalMatches,
+	(count(M.matchId) * 100)/(m1.numMatches + m2.numMatches) as winPercent
+FROM
+	MatchTable as M,
+	(SELECT count(*) as numMatches, team1 from MatchTable group by team1) as m1,  
+	(SELECT count(*) as numMatches, team2 from MatchTable group by team2) as m2
+WHERE
+	m1.team1 = m2.team2
+	and M.matchWinner = m1.team1
+	and M.matchWinner = m2.team2
+GROUP BY
+	M.matchWinner, m1.team1
+ORDER BY
+	(count(M.matchId) * 100)/(m1.numMatches + m2.numMatches) DESC
+
+
+8. MOM  top 10
+SELECT 
+	playerOfMatch,
+	count(*) as MOM
+FROM MatchTable
+GROUP BY
+	playerOfMatch
+ORDER BY
+	count(*) DESC
+LIMIT 10
+
+9. MOM greater than 10
+SELECT 
+	M.playerOfMatch,
+	count(M.matchId) as MOM
+FROM MatchTable as M
+WHERE 
+	(SELECT count(temp.matchId) from MatchTable as temp WHERE temp.playerOfMatch = M.playerOfMatch )  > 10
+GROUP BY 
+	M.playerOfMatch
+ORDER By
+	count(M.matchId) DESC
+
+10. resultMargin
+
+select
+	team1,
+	team2,
+	matchWinner,
+	resultMargin*1 as margin,
+	YEAR( STR_TO_DATE(matchDate, "%Y-%m-%d") ) as year,
+	venue
+
+from MatchTable
+where
+	result='runs'
+order by
+	resultMargin*1 DESC
+LIMIT 10
+
+//
+select
+	matchWinner,
+	count(*) as Wins
+from MatchTable
+where
+	result='wickets'
+	and resultMargin*1 = 10
+group by
+	matchWinner
+order by 
+	count(*) DESC
+
+
+10. 
+
+select 
+	umpire1,
+	count(*) as numMatches
+from MatchTable
+group by umpire1
+
+select 
+	umpire2,
+	count(*) as numMatches
+from MatchTable
+group by umpire2
+
+
+
+
+
+	
+
+
